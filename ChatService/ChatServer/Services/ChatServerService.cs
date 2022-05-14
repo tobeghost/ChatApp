@@ -139,57 +139,12 @@ namespace ChatServer.Services
         /// <param name="message"></param>
         public void SendMessage(string source, string message)
         {
-            string fullMessage = string.Empty;
-
-            // Split the messages using |||
-            // Count = 1 => Public Message
-            // Count = 2 => Public Message to One User
-            // Count = 3 => Private Message to Specific User
-            var messageContent = message.Split("|||");
-            var mesageContentCount = messageContent.Count();
-
             // Public message
-            if (mesageContentCount == 1)
+            if (!string.IsNullOrEmpty(message))
             {
-                fullMessage = $"{source} says to all: {message}";
+                var fullMessage = $"{source} says: {message}";
                 UpdateServerInformation(fullMessage);
                 SendPublicMessage(fullMessage);
-            }
-            // Public message to one user
-            else if (mesageContentCount == 2)
-            {
-                string publicUser = messageContent[0];
-                string publicMessage = messageContent[1];
-                fullMessage = $"{source} says to {publicUser}: {publicMessage}";
-
-                var userExists = CheckIfUserExists(publicUser);
-                if (userExists)
-                {
-                    UpdateServerInformation(fullMessage);
-                    SendPublicMessage(fullMessage);
-                }
-                else
-                {
-                    SendServerPrivateMessage("Not found user", source);
-                }
-            }
-            // Private message to specific user
-            else if (mesageContentCount == 3)
-            {
-                string privateUser = messageContent[0];
-                string privateMessage = messageContent[1];
-                fullMessage = $"{source} says to {privateUser} (privately): {privateMessage}";
-
-                var userExists = CheckIfUserExists(privateUser);
-                if (userExists)
-                {
-                    UpdateServerInformation(fullMessage);
-                    SendPrivateMessage(fullMessage, source, messageContent[0]);
-                }
-                else
-                {
-                    SendServerPrivateMessage("Not found user", source);
-                }
             }
         }
 
@@ -226,95 +181,6 @@ namespace ChatServer.Services
                 catch // If any problem, probably the user does not exists, so remove him
                 {
                     DeleteUser(tcpClientes[i]);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Send Server message to Source user.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="sourceUser"></param>
-        private void SendServerPrivateMessage(string message, string sourceUser)
-        {
-            var findSourceUser = _users[sourceUser];
-            if (findSourceUser != null && findSourceUser is TcpClient)
-            {
-                var tcpClient = findSourceUser as TcpClient;
-
-                try
-                {
-                    if (message.Trim() == "")
-                    {
-                        return;
-                    }
-
-                    // Send the message to the source user that has sent
-                    var writer = new StreamWriter(tcpClient.GetStream());
-                    writer.WriteLine(message);
-                    writer.Flush();
-                }
-                catch (Exception ex)
-                {
-                    DeleteUser(tcpClient);
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Send private message to specific user, based on the message
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="sourceUser"></param>
-        /// <param name="destinationUser"></param>
-        private void SendPrivateMessage(string message, string sourceUser, string destinationUser)
-        {
-            var findDestinationUser = _users[destinationUser];
-            if (findDestinationUser != null && findDestinationUser is TcpClient)
-            {
-                var tcpClient = findDestinationUser as TcpClient;
-
-                try
-                {
-
-                    if (message.Trim() == "")
-                    {
-                        return;
-                    }
-
-                    // Send the message to the specific user
-                    var writer = new StreamWriter(tcpClient.GetStream());
-                    writer.WriteLine(message);
-                    writer.Flush();
-                    writer = null;
-                }
-                catch (Exception ex)
-                {
-                    DeleteUser(tcpClient);
-                }
-            }
-
-            var findSourceUser = _users[sourceUser];
-            if (findSourceUser != null && findSourceUser is TcpClient)
-            {
-                var tcpClient = findSourceUser as TcpClient;
-
-                try
-                {
-                    if (message.Trim() == "")
-                    {
-                        return;
-                    }
-
-                    // Send the message to the source user that has sent
-                    var writer = new StreamWriter(tcpClient.GetStream());
-                    writer.WriteLine(message);
-                    writer.Flush();
-                }
-                catch (Exception ex)
-                {
-                    DeleteUser(tcpClient);
                 }
             }
         }
