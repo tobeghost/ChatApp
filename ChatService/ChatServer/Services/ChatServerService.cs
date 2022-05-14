@@ -17,6 +17,7 @@ namespace ChatServer.Services
         private readonly ChatServerOptions _options;
         private Hashtable _users { get; set; }
         private Hashtable _connections;
+        private Hashtable _timeLimits;
         private TcpListener _tcpListener;
         private Thread _threadListener;
         private bool _serverStatus;
@@ -31,6 +32,9 @@ namespace ChatServer.Services
 
             //Has table with the max connections
             _connections = new Hashtable(options.MaximumUsers);
+
+            //Has table with the max connections
+            _timeLimits = new Hashtable(options.MaximumUsers);
 
             //Set server status
             _serverStatus = true;
@@ -108,6 +112,7 @@ namespace ChatServer.Services
         {
             _users.Add(nickname, tcpClient);
             _connections.Add(tcpClient, nickname);
+            _timeLimits.Add(nickname, DateTime.Today);
 
             string newConnectionText = $"{_connections[tcpClient]} has joined.";
             UpdateServerAndUsers(newConnectionText);
@@ -125,6 +130,7 @@ namespace ChatServer.Services
                 var user = _connections[tcpClient];
 
                 _users.Remove(_connections[tcpClient]);
+                _timeLimits.Remove(_connections[tcpClient]);
                 _connections.Remove(tcpClient);
 
                 string userLefttext = $"{user} left.";
@@ -142,9 +148,23 @@ namespace ChatServer.Services
             // Public message
             if (!string.IsNullOrEmpty(message))
             {
-                var fullMessage = $"{source} says: {message}";
-                UpdateServerInformation(fullMessage);
-                SendPublicMessage(fullMessage);
+                var timeLimit = (DateTime)_timeLimits[source];
+                if (timeLimit != DateTime.Today && DateTime.Now.Subtract(timeLimit).TotalSeconds < 60)
+                {
+                    if (_users[source] is TcpClient tcpClient)
+                    {
+                        DeleteUser(tcpClient);
+                        tcpClient.Close();
+                    }
+                }
+                else
+                {
+                    var fullMessage = $"{source} says: {message}";
+                    UpdateServerInformation(fullMessage);
+                    SendPublicMessage(fullMessage);
+
+                    _timeLimits[source] = DateTime.Now;
+                }
             }
         }
 

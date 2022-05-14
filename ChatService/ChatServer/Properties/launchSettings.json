@@ -2,7 +2,7 @@
   "profiles": {
     "ChatServer": {
       "commandName": "Project",
-      "commandLineArgs": "-h 192.168.1.47 -p 2022"
+      "commandLineArgs": "-h 127.0.0.1 -p 2022"
     }
   }
 }
