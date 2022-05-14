@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ChatClient": {
+      "commandName": "Project",
+      "commandLineArgs": "-h 192.168.1.47 -p 2022"
+    }
+  }
+}
