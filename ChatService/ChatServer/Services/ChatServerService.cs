@@ -73,6 +73,8 @@ namespace ChatServer.Services
 
         public void KeepServer()
         {
+            Console.WriteLine("*** Server started successfully.");
+
             while (_serverStatus)
             {
                 //Accept a new connection
